@@ -8,15 +8,18 @@ pygame.init()
 CHARACTER_WIDTH = 25
 CHARACTER_HEIGHT = 25
 WINDOW_WIDTH = 480
-WINDOW_HEIGHT = 680
+WINDOW_HEIGHT = 780  # povecaj visinu za 100
 SIDE_PANEL_WIDTH = 200
 
-screen = pygame.display.set_mode((WINDOW_WIDTH + SIDE_PANEL_WIDTH, WINDOW_HEIGHT))
+# Dodaj desni panel
+RIGHT_PANEL_WIDTH = 200
+
+screen = pygame.display.set_mode((WINDOW_WIDTH + SIDE_PANEL_WIDTH + RIGHT_PANEL_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Mapa Igre")
 clock = pygame.time.Clock()
 
 original_background = pygame.image.load("mapa3.jpg").convert()
-background = pygame.transform.scale(original_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+background = pygame.transform.scale(original_background, (WINDOW_WIDTH, WINDOW_HEIGHT - 100))  # ili koristi originalnu visinu ako ti odgovara
 
 font_small = pygame.font.SysFont(None, 24)
 font_large = pygame.font.SysFont(None, 36)
@@ -142,31 +145,41 @@ def draw_dice_result(result):
     screen.blit(text, (30, 80))
 
 def animate_dice_roll(hero, is_attacker, y_offset):
+    panel_x = WINDOW_WIDTH + SIDE_PANEL_WIDTH
     for _ in range(10):
         roll = random.randint(1, 6)
-        screen.fill((200, 200, 200), (0, 500 + y_offset, SIDE_PANEL_WIDTH, 100))
-        pygame.draw.rect(screen, (255, 255, 255), (10, 500 + y_offset, SIDE_PANEL_WIDTH - 20, 90))
+        screen.fill((200, 200, 200), (panel_x, 500 + y_offset, RIGHT_PANEL_WIDTH, 100))
+        pygame.draw.rect(screen, (255, 255, 255), (panel_x + 10, 500 + y_offset, RIGHT_PANEL_WIDTH - 20, 90))
         label = "Napada!" if is_attacker else "Brani se!"
-        screen.blit(font_small.render(f"{hero.name} {label}", True, (0, 0, 0)), (20, 510 + y_offset))
-        screen.blit(font_large.render(str(roll), True, (0, 0, 0)), (20, 540 + y_offset))
+        screen.blit(font_small.render(f"{hero.name} {label}", True, (0, 0, 0)), (panel_x + 20, 510 + y_offset))
+        screen.blit(font_large.render(str(roll), True, (0, 0, 0)), (panel_x + 20, 540 + y_offset))
         pygame.display.flip()
         pygame.time.delay(100)
     return roll
 
 def show_final_score(hero, roll, bonus, y_offset):
+    panel_x = WINDOW_WIDTH + SIDE_PANEL_WIDTH
     total = roll + bonus
-    screen.fill((200, 200, 200), (0, 500 + y_offset, SIDE_PANEL_WIDTH, 100))
-    pygame.draw.rect(screen, (255, 255, 255), (10, 500 + y_offset, SIDE_PANEL_WIDTH - 20, 90))
-    screen.blit(font_small.render(f"{hero.name} rezultat:", True, (0, 0, 0)), (20, 510 + y_offset))
-    screen.blit(font_large.render(f"{roll} + {bonus} = {total}", True, (0, 0, 0)), (20, 540 + y_offset))
+    screen.fill((200, 200, 200), (panel_x, 500 + y_offset, RIGHT_PANEL_WIDTH, 100))
+    pygame.draw.rect(screen, (255, 255, 255), (panel_x + 10, 500 + y_offset, RIGHT_PANEL_WIDTH - 20, 90))
+    screen.blit(font_small.render(f"{hero.name} rezultat:", True, (0, 0, 0)), (panel_x + 20, 510 + y_offset))
+    screen.blit(font_large.render(f"{roll} + {bonus} = {total}", True, (0, 0, 0)), (panel_x + 20, 540 + y_offset))
     pygame.display.flip()
     pygame.time.delay(1000)
     return total
 
 def wait_for_kafic_click():
+    # Prikazuj poruku ispod mape, u novom donjem prostoru
+    msg_x = SIDE_PANEL_WIDTH + 20
+    msg_y = WINDOW_HEIGHT - 80  # 80 piksela iznad dna prozora
+    msg_w = WINDOW_WIDTH - 40
+    msg_h = 60
+
     while True:
-        pygame.draw.rect(screen, (255, 255, 255), (10, 500 + 10, SIDE_PANEL_WIDTH - 20, 90))
-        screen.blit(font_small.render("Klikni na kafic!", True, (0, 0, 0)), (20, 510 + 10))
+        # Očisti prostor ispod mape
+        pygame.draw.rect(screen, (255, 255, 255), (msg_x, msg_y, msg_w, msg_h))
+        pygame.draw.rect(screen, (0, 0, 0), (msg_x, msg_y, msg_w, msg_h), 2)
+        screen.blit(font_large.render("Klikni na kafic!", True, (0, 0, 0)), (msg_x + 20, msg_y + 15))
         pygame.display.flip()
         pygame.time.delay(1000)
         for event in pygame.event.get():
@@ -321,8 +334,12 @@ while True:
                     w, h = char.drawsize
                     if (mouse_x >= x and mouse_x <= x + w and mouse_y >= y and mouse_y <= y + h):
                         # Prikazi prozor sa statovima
-                        stat_rect = pygame.Rect(mouse_x, mouse_y, 160, 110)
-                        close_rect = pygame.Rect(mouse_x + 90, mouse_y + 75, 60, 25)  # šire dugme
+                        stat_rect_w, stat_rect_h = 160, 110
+                        # Prilagodi poziciju da ne izlazi van ekrana
+                        sx = min(mouse_x, WINDOW_WIDTH + SIDE_PANEL_WIDTH + RIGHT_PANEL_WIDTH - stat_rect_w - 10)
+                        sy = min(mouse_y, WINDOW_HEIGHT - stat_rect_h - 10)
+                        stat_rect = pygame.Rect(sx, sy, stat_rect_w, stat_rect_h)
+                        close_rect = pygame.Rect(sx + 90, sy + 75, 60, 25)  # šire dugme
 
                         while True:
                             # Nacrtaj prozor
