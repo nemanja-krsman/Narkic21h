@@ -35,23 +35,35 @@ class Hero:
         self.speed = 0
         self.dice = 0
         self.offset_applied = False
+        self.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
 
     def draw(self, surface):
-        surface.blit(self.image, self.drawpos)
+        surface.blit(pygame.transform.scale(self.image, self.drawsize), self.drawpos)
         if self.selected:
-            image_rect = self.image.get_rect(topleft=self.drawpos)
+            image_rect = pygame.Rect(self.drawpos, self.drawsize)
             pygame.draw.rect(surface, (0, 0, 255), image_rect, 3)
+valid_fields = [
+(87, 666), (191, 665), (291, 664), (390, 663), (88, 631), (190, 628), (290, 628), (391, 629),
+(87, 599), (189, 598), (290, 598), (393, 599), (86, 562), (191, 562), (292, 560), (394, 563),
+(87, 527), (123, 528), (154, 528), (196, 529), (227, 527), (258, 528), (290, 528), (326, 527),
+(358, 525), (393, 524), (107, 493), (175, 494), (306, 494), (378, 491), (139, 460), (345, 457),
+(137, 425), (345, 421), (158, 388), (329, 391), (191, 361), (295, 361), (220, 328), (269, 325),
+(240, 294), (246, 261), (219, 228), (265, 226), (188, 192), (296, 190), (174, 160), (312, 159),
+(176, 126), (315, 127), (198, 94), (299, 94), (249, 59), (246, 16)
+]
+kafici_fields = [(123, 528), (154, 528), (326, 527), (358, 525)]
+
 
 characters = [
-    Hero("Rajic", "Rajic.jpg", [30, 100], 0),
-    Hero("Krsman", "Krsman.jpg", [30, 180], 1),
-    Hero("Persic", "Persic.jpg", [30, 220], 1),
-    Hero("Maja", "Maja.jpg", [30, 260], 1),
-    Hero("Branka", "Branka.jpg", [30, 300], 1),
-    Hero("Mitke", "Mitke.jpg", [30, 380], 2),
-    Hero("Gomke", "Gomke.jpg", [30, 420], 2),
-    Hero("Geci", "Geci.jpg", [30, 460], 2),
-    Hero("Baler", "Baler.jpg", [30, 500], 2),
+    Hero("Rajic", "Rajic.jpg", [40, 60], 0),
+    Hero("Krsman", "Krsman.jpg", [40, 110], 1),
+    Hero("Persic", "Persic.jpg", [40, 160], 1),
+    Hero("Maja", "Maja.jpg", [40, 210], 1),
+    Hero("Branka", "Branka.jpg", [40, 260], 1),
+    Hero("Mitke", "Mitke.jpg", [120, 60], 2),
+    Hero("Gomke", "Gomke.jpg", [120, 110], 2),
+    Hero("Geci", "Geci.jpg", [120, 160], 2),
+    Hero("Baler", "Baler.jpg", [120, 210], 2),
 ]
 
 # Podešavanje statova
@@ -64,18 +76,15 @@ characters[7].attak = 0; characters[7].defense = 0
 characters[4].attak = 1; characters[4].defense = 1
 characters[8].attak = 1; characters[8].defense = 1
 
-valid_fields = [
-(87, 666), (191, 665), (291, 664), (390, 663), (88, 631), (190, 628), (290, 628), (391, 629),
-(87, 599), (189, 598), (290, 598), (393, 599), (86, 562), (191, 562), (292, 560), (394, 563),
-(87, 527), (123, 528), (154, 528), (196, 529), (227, 527), (258, 528), (290, 528), (326, 527),
-(358, 525), (393, 524), (107, 493), (175, 494), (306, 494), (378, 491), (139, 460), (345, 457),
-(137, 425), (345, 421), (158, 388), (329, 391), (191, 361), (295, 361), (220, 328), (269, 325),
-(240, 294), (246, 261), (219, 228), (265, 226), (188, 192), (296, 190), (174, 160), (312, 159),
-(176, 126), (315, 127), (198, 94), (299, 94), (249, 59), (246, 16)
-]
-kafici_fields = [(123, 528), (157, 528), (327, 531), (357, 527)]
 
 dice_result = None
+
+def draw_characters_in_panel():
+    for char in characters:
+        if tuple(char.currentpos) not in valid_fields:
+            char.drawpos = char.currentpos[:]
+            char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
+            char.draw(screen)
 
 def closest_field(pos, fields):
     x, y = pos
@@ -115,6 +124,10 @@ def show_final_score(hero, roll, bonus, y_offset):
 
 def wait_for_kafic_click():
     while True:
+        pygame.draw.rect(screen, (255, 255, 255), (10, 500 + 10, SIDE_PANEL_WIDTH - 20, 90))
+        screen.blit(font_small.render("Klikni na kafic!", True, (0, 0, 0)), (20, 510 + 10))
+        pygame.display.flip()
+        pygame.time.delay(1000)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -162,12 +175,36 @@ def process_battle(hero1, hero2):
     loser.currentpos = kafic_pos[:]
     loser.offset_applied = False
 
+def get_characters_on_pos(pos):
+    return [char for char in characters if char.currentpos == pos]
+
+def draw_characters_grouped():
+    for field in valid_fields:
+        chars_on_field = get_characters_on_pos(field)
+        n = len(chars_on_field)
+        if n == 0:
+            continue
+        for idx, char in enumerate(chars_on_field):
+            if n == 1:
+                char_size = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
+                offset = (0, 0)
+            else:
+                char_size = (CHARACTER_WIDTH // 2, CHARACTER_HEIGHT // 2)
+                angle = 2 * math.pi * idx / n
+                radius = 12
+                offset = (int(radius * math.cos(angle)), int(radius * math.sin(angle)))
+            draw_x = field[0] + SIDE_PANEL_WIDTH - char_size[0] // 2 + offset[0]
+            draw_y = field[1] - char_size[1] // 2 + offset[1]
+            char.drawpos = [draw_x, draw_y]
+            char.drawsize = char_size
+            char.draw(screen)
+
 while True:
     screen.fill((200, 200, 200))
     screen.blit(background, (SIDE_PANEL_WIDTH, 0))
 
-    for char in characters:
-        char.draw(screen)
+    draw_characters_in_panel() 
+    draw_characters_grouped()
 
     draw_button()
     if dice_result is not None:
@@ -182,10 +219,67 @@ while True:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             najblize = closest_field((mouse_x - SIDE_PANEL_WIDTH, mouse_y), valid_fields)
 
+            # Prvo proveri da li je kliknuto na grupu karaktera
+            clicked_group = None
+            for field in valid_fields:
+                chars_on_field = get_characters_on_pos(field)
+                if len(chars_on_field) > 1:
+                    for char in chars_on_field:
+                        x, y = char.drawpos
+                        w, h = char.drawsize
+                        if (mouse_x >= x and mouse_x <= x + w and mouse_y >= y and mouse_y <= y + h):
+                            clicked_group = (field, chars_on_field)
+                            break
+                if clicked_group:
+                    break
+
+            if clicked_group:
+                # Prikazi meni za izbor karaktera
+                menu_rects = []
+                menu_x = clicked_group[0][0] + SIDE_PANEL_WIDTH + 30
+                menu_y = clicked_group[0][1] - 15
+
+                # Prvo dodaj opciju "Niko"
+                rect_niko = pygame.Rect(menu_x, menu_y, 80, 25)
+                pygame.draw.rect(screen, (220, 220, 220), rect_niko)
+                pygame.draw.rect(screen, (0, 0, 0), rect_niko, 1)
+                screen.blit(font_small.render("Niko", True, (0, 0, 0)), (rect_niko.x + 3, rect_niko.y + 3))
+                menu_rects.append((rect_niko, None))
+
+                # Onda dodaj sve karaktere
+                for idx, c in enumerate(clicked_group[1]):
+                    rect = pygame.Rect(menu_x, menu_y + (idx + 1) * 30, 80, 25)
+                    pygame.draw.rect(screen, (255, 255, 200), rect)
+                    pygame.draw.rect(screen, (0, 0, 0), rect, 1)
+                    screen.blit(font_small.render(c.name, True, (0, 0, 0)), (rect.x + 3, rect.y + 3))
+                    menu_rects.append((rect, c))
+                pygame.display.flip()
+                selecting = True
+                while selecting:
+                    for ev in pygame.event.get():
+                        if ev.type == pygame.MOUSEBUTTONDOWN:
+                            mx, my = pygame.mouse.get_pos()
+                            for rect, c in menu_rects:
+                                if rect.collidepoint(mx, my):
+                                    for cc in clicked_group[1]:
+                                        cc.selected = False
+                                    if c is not None:
+                                        c.selected = True
+                                        print(f"Selektovan {c.name}!")
+                                    else:
+                                        print("Niko nije selektovan!")
+                                    selecting = False
+                                    break
+                        elif ev.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                continue
+
+            # Standardna selekcija/pomeranje
             for char in characters:
                 if char.selected:
-                    if (mouse_x >= char.drawpos[0] and mouse_x <= char.drawpos[0] + CHARACTER_WIDTH and
-                        mouse_y >= char.drawpos[1] and mouse_y <= char.drawpos[1] + CHARACTER_HEIGHT):
+                    if (mouse_x >= char.drawpos[0] and mouse_x <= char.drawpos[0] + char.drawsize[0] and
+                        mouse_y >= char.drawpos[1] and mouse_y <= char.drawpos[1] + char.drawsize[1]):
                         char.selected = False
                         print(f"{char.name} vise nije selektovan!")
                     else:
@@ -197,8 +291,8 @@ while True:
                     break
             else:
                 for char in characters:
-                    if (mouse_x >= char.drawpos[0] and mouse_x <= char.drawpos[0] + CHARACTER_WIDTH and
-                        mouse_y >= char.drawpos[1] and mouse_y <= char.drawpos[1] + CHARACTER_HEIGHT):
+                    if (mouse_x >= char.drawpos[0] and mouse_x <= char.drawpos[0] + char.drawsize[0] and
+                        mouse_y >= char.drawpos[1] and mouse_y <= char.drawpos[1] + char.drawsize[1]):
                         char.selected = True
                         print(f"Selektovan {char.name}!")
                         break
