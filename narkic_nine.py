@@ -67,7 +67,11 @@ characters = [
     Hero("Barac", "Barac.jpg", [40, 210], 3),
     Hero("Sladja", "Sladja.jpg", [80, 210], 3),
     Hero("Tanja", "Tanja.jpg", [120, 210], 3),
-    Hero("Vlada", "Vlada.jpg", [160, 210], 3)
+    Hero("Vlada", "Vlada.jpg", [160, 210], 3),
+    Hero("Milica", "Milica.jpg", [40, 260], 4),
+    Hero("Komsa", "Komsa.jpg", [80, 260], 4),
+    Hero("Stifla", "Stifla.jpg", [120, 260], 4),
+    Hero("Andjela", "Andjela.jpg", [160, 260], 4)
 ]
 
 # Podešavanje statova
@@ -96,6 +100,23 @@ characters[11].speed = characters[3].speed
 characters[12].attak = characters[4].attak
 characters[12].defense = characters[4].defense
 characters[12].speed = characters[4].speed
+
+# Statovi za tim 4
+characters[13].attak = characters[1].attak
+characters[13].defense = characters[1].defense
+characters[13].speed = characters[1].speed
+
+characters[14].attak = characters[2].attak
+characters[14].defense = characters[2].defense
+characters[14].speed = characters[2].speed
+
+characters[15].attak = characters[3].attak
+characters[15].defense = characters[3].defense
+characters[15].speed = characters[3].speed
+
+characters[16].attak = characters[4].attak
+characters[16].defense = characters[4].defense
+characters[16].speed = characters[4].speed
 
 dice_result = None
 
@@ -228,7 +249,7 @@ TEAM_RECT_WIDTH = SIDE_PANEL_WIDTH - 2 * TEAM_PANEL_MARGIN
 
 # Funkcija za crtanje timova u panelu (dodaj i za TIM3)
 def draw_teams_panel():
-    teams = {1: [], 2: [], 3: []}
+    teams = {1: [], 2: [], 3: [], 4: []}
     for char in characters:
         if char.team == 1:
             teams[1].append(char)
@@ -236,6 +257,8 @@ def draw_teams_panel():
             teams[2].append(char)
         elif char.team == 3:
             teams[3].append(char)
+        elif char.team == 4:
+            teams[4].append(char)
     # Prvi tim
     pygame.draw.rect(screen, (220, 220, 255), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
     screen.blit(font_small.render("TIM1", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + 5))
@@ -260,6 +283,15 @@ def draw_teams_panel():
     for idx, char in enumerate(teams[3]):
         x = TEAM_PANEL_MARGIN + 10 + idx * (CHARACTER_WIDTH + 10)
         y = TEAM_PANEL_TOP + 2 * TEAM_PANEL_HEIGHT + 30
+        char.drawpos = [x, y]
+        char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
+        char.draw(screen)
+    # Četvrti tim
+    pygame.draw.rect(screen, (255, 255, 200), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP + 3 * TEAM_PANEL_HEIGHT, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
+    screen.blit(font_small.render("TIM4", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + 3 * TEAM_PANEL_HEIGHT + 5))
+    for idx, char in enumerate(teams[4]):
+        x = TEAM_PANEL_MARGIN + 10 + idx * (CHARACTER_WIDTH + 10)
+        y = TEAM_PANEL_TOP + 3 * TEAM_PANEL_HEIGHT + 30
         char.drawpos = [x, y]
         char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
         char.draw(screen)
