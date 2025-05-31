@@ -67,14 +67,14 @@ characters = [
 ]
 
 # Podešavanje statova
-characters[1].attak = 1; characters[1].defense = 2
-characters[5].attak = 1; characters[5].defense = 2
-characters[2].attak = -1; characters[2].defense = 3
-characters[6].attak = -1; characters[6].defense = 3
-characters[3].attak = 0; characters[3].defense = 0
-characters[7].attak = 0; characters[7].defense = 0
-characters[4].attak = 1; characters[4].defense = 1
-characters[8].attak = 1; characters[8].defense = 1
+characters[1].attak = 1; characters[1].defense = 2; characters[1].speed = -1
+characters[5].attak = 1; characters[5].defense = 2; characters[5].speed = -1
+characters[2].attak = -1; characters[2].defense = 3; characters[2].speed = 1
+characters[6].attak = -1; characters[6].defense = 3; characters[6].speed = 1
+characters[3].attak = 0; characters[3].defense = 0; characters[3].speed = 3
+characters[7].attak = 0; characters[7].defense = 0; characters[7].speed = 3
+characters[4].attak = 1; characters[4].defense = 1; characters[4].speed = 0
+characters[8].attak = 1; characters[8].defense = 1; characters[8].speed = 0
 
 
 dice_result = None
@@ -199,11 +199,45 @@ def draw_characters_grouped():
             char.drawsize = char_size
             char.draw(screen)
 
+# Dodaj ove konstante za panel
+TEAM_PANEL_TOP = 90   # ispod dugmeta BACI
+TEAM_PANEL_HEIGHT = 160
+TEAM_PANEL_MARGIN = 20
+TEAM_RECT_HEIGHT = 30
+TEAM_RECT_WIDTH = SIDE_PANEL_WIDTH - 2 * TEAM_PANEL_MARGIN
+
+# Funkcija za crtanje timova u panelu
+def draw_teams_panel():
+    teams = {1: [], 2: []}
+    for char in characters:
+        if char.team == 1:
+            teams[1].append(char)
+        elif char.team == 2:
+            teams[2].append(char)
+    # Prvi tim
+    pygame.draw.rect(screen, (220, 220, 255), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
+    screen.blit(font_small.render("TIM1", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + 5))
+    for idx, char in enumerate(teams[1]):
+        x = TEAM_PANEL_MARGIN + 10 + idx * (CHARACTER_WIDTH + 10)
+        y = TEAM_PANEL_TOP + 30
+        char.drawpos = [x, y]
+        char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
+        char.draw(screen)
+    # Drugi tim
+    pygame.draw.rect(screen, (255, 220, 220), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP + TEAM_PANEL_HEIGHT, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
+    screen.blit(font_small.render("TIM2", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + TEAM_PANEL_HEIGHT + 5))
+    for idx, char in enumerate(teams[2]):
+        x = TEAM_PANEL_MARGIN + 10 + idx * (CHARACTER_WIDTH + 10)
+        y = TEAM_PANEL_TOP + TEAM_PANEL_HEIGHT + 30
+        char.drawpos = [x, y]
+        char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
+        char.draw(screen)
+
 while True:
     screen.fill((200, 200, 200))
     screen.blit(background, (SIDE_PANEL_WIDTH, 0))
 
-    draw_characters_in_panel() 
+    draw_teams_panel()           # OVO UMESTO draw_characters_in_panel()
     draw_characters_grouped()
 
     draw_button()
@@ -217,6 +251,47 @@ while True:
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
+            # --- NOVO: desni klik za statove ---
+            if event.button == 3:  # desni klik
+                for char in characters:
+                    x, y = char.drawpos
+                    w, h = char.drawsize
+                    if (mouse_x >= x and mouse_x <= x + w and mouse_y >= y and mouse_y <= y + h):
+                        # Prikazi prozor sa statovima
+                        stat_rect = pygame.Rect(mouse_x, mouse_y, 160, 110)
+                        close_rect = pygame.Rect(mouse_x + 90, mouse_y + 75, 60, 25)  # šire dugme
+
+                        while True:
+                            # Nacrtaj prozor
+                            pygame.draw.rect(screen, (245, 245, 220), stat_rect)
+                            pygame.draw.rect(screen, (0, 0, 0), stat_rect, 2)
+                            screen.blit(font_small.render(f"{char.name}", True, (0, 0, 0)), (mouse_x + 10, mouse_y + 10))
+                            screen.blit(font_small.render(f"Napad: {char.attak}", True, (0, 0, 0)), (mouse_x + 10, mouse_y + 35))
+                            screen.blit(font_small.render(f"Odbrana: {char.defense}", True, (0, 0, 0)), (mouse_x + 10, mouse_y + 55))
+                            screen.blit(font_small.render(f"Brzina: {char.speed}", True, (0, 0, 0)), (mouse_x + 10, mouse_y + 75))
+                            # Dugme zatvori
+                            pygame.draw.rect(screen, (200, 100, 100), close_rect)
+                            pygame.draw.rect(screen, (0, 0, 0), close_rect, 1)
+                            # Centriraj tekst "Zatvori" u dugmetu
+                            text_surface = font_small.render("Zatvori", True, (255, 255, 255))
+                            text_rect = text_surface.get_rect(center=close_rect.center)
+                            screen.blit(text_surface, text_rect)
+                            pygame.display.flip()
+                            for ev in pygame.event.get():
+                                if ev.type == pygame.QUIT:
+                                    pygame.quit()
+                                    sys.exit()
+                                elif ev.type == pygame.MOUSEBUTTONDOWN:
+                                    mx, my = pygame.mouse.get_pos()
+                                    if close_rect.collidepoint(mx, my):
+                                        break
+                            else:
+                                continue
+                            break
+                        break
+                continue
+            # --- KRAJ NOVOG KODA ---
+
             najblize = closest_field((mouse_x - SIDE_PANEL_WIDTH, mouse_y), valid_fields)
 
             # Prvo proveri da li je kliknuto na grupu karaktera
