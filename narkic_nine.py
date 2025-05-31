@@ -57,13 +57,17 @@ kafici_fields = [(123, 528), (154, 528), (326, 527), (358, 525)]
 characters = [
     Hero("Rajic", "Rajic.jpg", [40, 60], 0),
     Hero("Krsman", "Krsman.jpg", [40, 110], 1),
-    Hero("Persic", "Persic.jpg", [40, 160], 1),
-    Hero("Maja", "Maja.jpg", [40, 210], 1),
-    Hero("Branka", "Branka.jpg", [40, 260], 1),
-    Hero("Mitke", "Mitke.jpg", [120, 60], 2),
-    Hero("Gomke", "Gomke.jpg", [120, 110], 2),
+    Hero("Persic", "Persic.jpg", [80, 110], 1),
+    Hero("Maja", "Maja.jpg", [120, 110], 1),
+    Hero("Branka", "Branka.jpg", [160, 110], 1),
+    Hero("Mitke", "Mitke.jpg", [40, 160], 2),
+    Hero("Gomke", "Gomke.jpg", [80, 160], 2),
     Hero("Geci", "Geci.jpg", [120, 160], 2),
-    Hero("Baler", "Baler.jpg", [120, 210], 2),
+    Hero("Baler", "Baler.jpg", [160, 160], 2),
+    Hero("Barac", "Barac.jpg", [40, 210], 3),
+    Hero("Sladja", "Sladja.jpg", [80, 210], 3),
+    Hero("Tanja", "Tanja.jpg", [120, 210], 3),
+    Hero("Vlada", "Vlada.jpg", [160, 210], 3)
 ]
 
 # Podešavanje statova
@@ -76,6 +80,22 @@ characters[7].attak = 0; characters[7].defense = 0; characters[7].speed = 3
 characters[4].attak = 1; characters[4].defense = 1; characters[4].speed = 0
 characters[8].attak = 1; characters[8].defense = 1; characters[8].speed = 0
 
+# Statovi za tim 3
+characters[9].attak = characters[1].attak
+characters[9].defense = characters[1].defense
+characters[9].speed = characters[1].speed
+
+characters[10].attak = characters[2].attak
+characters[10].defense = characters[2].defense
+characters[10].speed = characters[2].speed
+
+characters[11].attak = characters[3].attak
+characters[11].defense = characters[3].defense
+characters[11].speed = characters[3].speed
+
+characters[12].attak = characters[4].attak
+characters[12].defense = characters[4].defense
+characters[12].speed = characters[4].speed
 
 dice_result = None
 
@@ -206,14 +226,16 @@ TEAM_PANEL_MARGIN = 20
 TEAM_RECT_HEIGHT = 30
 TEAM_RECT_WIDTH = SIDE_PANEL_WIDTH - 2 * TEAM_PANEL_MARGIN
 
-# Funkcija za crtanje timova u panelu
+# Funkcija za crtanje timova u panelu (dodaj i za TIM3)
 def draw_teams_panel():
-    teams = {1: [], 2: []}
+    teams = {1: [], 2: [], 3: []}
     for char in characters:
         if char.team == 1:
             teams[1].append(char)
         elif char.team == 2:
             teams[2].append(char)
+        elif char.team == 3:
+            teams[3].append(char)
     # Prvi tim
     pygame.draw.rect(screen, (220, 220, 255), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
     screen.blit(font_small.render("TIM1", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + 5))
@@ -229,6 +251,15 @@ def draw_teams_panel():
     for idx, char in enumerate(teams[2]):
         x = TEAM_PANEL_MARGIN + 10 + idx * (CHARACTER_WIDTH + 10)
         y = TEAM_PANEL_TOP + TEAM_PANEL_HEIGHT + 30
+        char.drawpos = [x, y]
+        char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
+        char.draw(screen)
+    # Treći tim
+    pygame.draw.rect(screen, (220, 255, 220), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP + 2 * TEAM_PANEL_HEIGHT, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
+    screen.blit(font_small.render("TIM3", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + 2 * TEAM_PANEL_HEIGHT + 5))
+    for idx, char in enumerate(teams[3]):
+        x = TEAM_PANEL_MARGIN + 10 + idx * (CHARACTER_WIDTH + 10)
+        y = TEAM_PANEL_TOP + 2 * TEAM_PANEL_HEIGHT + 30
         char.drawpos = [x, y]
         char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
         char.draw(screen)
