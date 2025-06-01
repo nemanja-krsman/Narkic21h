@@ -122,6 +122,7 @@ characters[16].defense = characters[4].defense
 characters[16].speed = characters[4].speed
 
 dice_result = None
+rolling_result = None
 
 def draw_characters_in_panel():
     for char in characters:
@@ -309,16 +310,32 @@ def draw_teams_panel():
         char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
         char.draw(screen)
 
+def animate_button_roll():
+    global rolling_result
+    for _ in range(10):
+        roll = random.randint(1, 6)
+        # Očisti prostor pored dugmeta
+        pygame.draw.rect(screen, (255, 255, 255), (140, 30, 50, 40))
+        pygame.draw.rect(screen, (0, 0, 0), (140, 30, 50, 40), 2)
+        screen.blit(font_large.render(str(roll), True, (0, 0, 0)), (155, 35))
+        pygame.display.flip()
+        pygame.time.delay(80)
+    rolling_result = roll
+
+def draw_button_result():
+    if rolling_result is not None:
+        pygame.draw.rect(screen, (255, 255, 255), (140, 30, 50, 40))
+        pygame.draw.rect(screen, (0, 0, 0), (140, 30, 50, 40), 2)
+        screen.blit(font_large.render(str(rolling_result), True, (0, 0, 0)), (155, 35))
+
 while True:
     screen.fill((200, 200, 200))
     screen.blit(background, (SIDE_PANEL_WIDTH, 0))
 
-    draw_teams_panel()           # OVO UMESTO draw_characters_in_panel()
+    draw_teams_panel()
     draw_characters_grouped()
-
     draw_button()
-    if dice_result is not None:
-        draw_dice_result(dice_result)
+    draw_button_result()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -327,6 +344,10 @@ while True:
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
+            # Dodaj ovo pre ostalih klikova:
+            if event.button == 1 and 30 <= mouse_x <= 130 and 30 <= mouse_y <= 70:
+                animate_button_roll()
+                continue
             # --- NOVO: desni klik za statove ---
             if event.button == 3:  # desni klik
                 for char in characters:
@@ -370,7 +391,6 @@ while True:
                             break
                         break
                 continue
-            # --- KRAJ NOVOG KODA ---
 
             najblize = closest_field((mouse_x - SIDE_PANEL_WIDTH, mouse_y), valid_fields)
 
