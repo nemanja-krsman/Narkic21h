@@ -12,7 +12,7 @@ WINDOW_HEIGHT = 780  # povecaj visinu za 100
 SIDE_PANEL_WIDTH = 200
 
 # Dodaj desni panel
-RIGHT_PANEL_WIDTH = 200
+RIGHT_PANEL_WIDTH = 260  # povećano sa 200 na 260 (ili više po potrebi)
 
 screen = pygame.display.set_mode((WINDOW_WIDTH + SIDE_PANEL_WIDTH + RIGHT_PANEL_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Mapa Igre")
@@ -123,6 +123,13 @@ characters[16].speed = characters[4].speed
 
 dice_result = None
 rolling_result = None
+
+# Dodaj na početak fajla
+current_team = 1
+team_order = [1, 2, 3, 4]
+team_turn_index = 0
+turn_dice_rolled = False
+turn_character_played = False
 
 def draw_characters_in_panel():
     for char in characters:
@@ -328,6 +335,12 @@ def draw_button_result():
         pygame.draw.rect(screen, (0, 0, 0), (140, 30, 50, 40), 2)
         screen.blit(font_large.render(str(rolling_result), True, (0, 0, 0)), (155, 35))
 
+def draw_current_team_panel():
+    panel_x = WINDOW_WIDTH + SIDE_PANEL_WIDTH
+    pygame.draw.rect(screen, (230, 230, 255), (panel_x, 30, RIGHT_PANEL_WIDTH - 20, 60))
+    team_text = f"Na potezu: TIM{current_team}"
+    screen.blit(font_large.render(team_text, True, (0, 0, 180)), (panel_x + 10, 50))
+
 while True:
     screen.fill((200, 200, 200))
     screen.blit(background, (SIDE_PANEL_WIDTH, 0))
@@ -336,6 +349,7 @@ while True:
     draw_characters_grouped()
     draw_button()
     draw_button_result()
+    draw_current_team_panel()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -346,7 +360,9 @@ while True:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             # Dodaj ovo pre ostalih klikova:
             if event.button == 1 and 30 <= mouse_x <= 130 and 30 <= mouse_y <= 70:
-                animate_button_roll()
+                if not turn_dice_rolled:
+                    animate_button_roll()
+                    turn_dice_rolled = True
                 continue
             # --- NOVO: desni klik za statove ---
             if event.button == 3:  # desni klik
@@ -458,18 +474,27 @@ while True:
                         char.selected = False
                         print(f"{char.name} vise nije selektovan!")
                     else:
-                        char.drawpos = [najblize[0] + SIDE_PANEL_WIDTH - CHARACTER_WIDTH // 2,
-                                        najblize[1] - CHARACTER_HEIGHT // 2]
-                        char.currentpos = najblize[:]
-                        char.offset_applied = False
-                        print(f"{char.name} se pomera")
+                        # Dozvoli potez samo ako je njegov tim na potezu i kockica je bačena
+                        if char.team == current_team and turn_dice_rolled and not turn_character_played:
+                            char.drawpos = [najblize[0] + SIDE_PANEL_WIDTH - CHARACTER_WIDTH // 2,
+                                            najblize[1] - CHARACTER_HEIGHT // 2]
+                            char.currentpos = najblize[:]
+                            char.offset_applied = False
+                            print(f"{char.name} se pomera")
+                            turn_character_played = True
+                        else:
+                            print("Nije tvoj tim na potezu ili nisi bacio kockicu!")
                     break
             else:
                 for char in characters:
                     if (mouse_x >= char.drawpos[0] and mouse_x <= char.drawpos[0] + char.drawsize[0] and
                         mouse_y >= char.drawpos[1] and mouse_y <= char.drawpos[1] + char.drawsize[1]):
-                        char.selected = True
-                        print(f"Selektovan {char.name}!")
+                        # Dozvoli selekciju samo svom timu u svom potezu
+                        if char.team == current_team and turn_dice_rolled and not turn_character_played:
+                            char.selected = True
+                            print(f"Selektovan {char.name}!")
+                        else:
+                            print("Nije tvoj tim na potezu ili nisi bacio kockicu!")
                         break
 
             for i, hero1 in enumerate(characters):
@@ -488,6 +513,14 @@ while True:
                         hero2.drawpos[0] += CHARACTER_WIDTH // 2
                         hero1.offset_applied = True
                         hero2.offset_applied = True
+
+    # Ako su oba koraka završena, prelazi na sledeći tim
+    if turn_dice_rolled and turn_character_played:
+        team_turn_index = (team_turn_index + 1) % len(team_order)
+        current_team = team_order[team_turn_index]
+        turn_dice_rolled = False
+        turn_character_played = False
+        rolling_result = None  # resetuj prikaz kockice
 
     pygame.display.flip()
     clock.tick(60)
