@@ -55,6 +55,7 @@ valid_fields = [
 (176, 126), (315, 127), (198, 94), (299, 94), (249, 59), (246, 16)
 ]
 kafici_fields = [(123, 528), (154, 528), (326, 527), (358, 525)]
+trafike_fields = [(139, 460), (345, 457), (240, 294), (246, 261)]
 
 
 characters = [
@@ -289,6 +290,10 @@ def draw_teams_panel():
         char.drawpos = [x, y]
         char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
         char.draw(screen)
+    # Prikaz piva ispod karaktera tima 1
+    screen.blit(font_small.render(f"Piva: {team_beers[1]}", True, (0, 0, 0)),
+                (TEAM_PANEL_MARGIN + 10, TEAM_PANEL_TOP + 30 + CHARACTER_HEIGHT + 5))
+
     # Drugi tim
     pygame.draw.rect(screen, (255, 220, 220), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP + TEAM_PANEL_HEIGHT, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
     screen.blit(font_small.render("TIM2", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + TEAM_PANEL_HEIGHT + 5))
@@ -298,6 +303,9 @@ def draw_teams_panel():
         char.drawpos = [x, y]
         char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
         char.draw(screen)
+    screen.blit(font_small.render(f"Piva: {team_beers[2]}", True, (0, 0, 0)),
+                (TEAM_PANEL_MARGIN + 10, TEAM_PANEL_TOP + TEAM_PANEL_HEIGHT + 30 + CHARACTER_HEIGHT + 5))
+
     # Treći tim
     pygame.draw.rect(screen, (220, 255, 220), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP + 2 * TEAM_PANEL_HEIGHT, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
     screen.blit(font_small.render("TIM3", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + 2 * TEAM_PANEL_HEIGHT + 5))
@@ -307,6 +315,9 @@ def draw_teams_panel():
         char.drawpos = [x, y]
         char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
         char.draw(screen)
+    screen.blit(font_small.render(f"Piva: {team_beers[3]}", True, (0, 0, 0)),
+                (TEAM_PANEL_MARGIN + 10, TEAM_PANEL_TOP + 2 * TEAM_PANEL_HEIGHT + 30 + CHARACTER_HEIGHT + 5))
+
     # Četvrti tim
     pygame.draw.rect(screen, (255, 255, 200), (TEAM_PANEL_MARGIN, TEAM_PANEL_TOP + 3 * TEAM_PANEL_HEIGHT, TEAM_RECT_WIDTH, TEAM_RECT_HEIGHT))
     screen.blit(font_small.render("TIM4", True, (0, 0, 0)), (TEAM_PANEL_MARGIN + 5, TEAM_PANEL_TOP + 3 * TEAM_PANEL_HEIGHT + 5))
@@ -316,6 +327,8 @@ def draw_teams_panel():
         char.drawpos = [x, y]
         char.drawsize = (CHARACTER_WIDTH, CHARACTER_HEIGHT)
         char.draw(screen)
+    screen.blit(font_small.render(f"Piva: {team_beers[4]}", True, (0, 0, 0)),
+                (TEAM_PANEL_MARGIN + 10, TEAM_PANEL_TOP + 3 * TEAM_PANEL_HEIGHT + 30 + CHARACTER_HEIGHT + 5))
 
 def animate_button_roll():
     global rolling_result
@@ -341,6 +354,34 @@ def draw_current_team_panel():
     team_text = f"Na potezu: TIM{current_team}"
     screen.blit(font_large.render(team_text, True, (0, 0, 180)), (panel_x + 10, 50))
 
+# Stanje trafika: [broj_piva, isplata_po_krugu]
+trafike = [
+    {"pos": trafike_fields[0], "piva": 20, "isplata": 2, "naziv": "Trafika1"},
+    {"pos": trafike_fields[1], "piva": 20, "isplata": 2, "naziv": "Trafika2"},
+    {"pos": trafike_fields[2], "piva": 15, "isplata": 3, "naziv": "Trafika3"},
+    {"pos": trafike_fields[3], "piva": 20, "isplata": 4, "naziv": "Trafika4"},
+]
+
+# Piva po timu (indeksirano po broju tima)
+team_beers = {1: 0, 2: 0, 3: 0, 4: 0}
+
+def draw_trafike_and_beers():
+    panel_x = WINDOW_WIDTH + SIDE_PANEL_WIDTH
+    y = 110
+    screen.blit(font_large.render("TRAFIKE", True, (120, 60, 0)), (panel_x + 10, y))
+    y += 40
+    for trafika in trafike:
+        txt = f"{trafika['naziv']}: {trafika['piva']} piva"
+        screen.blit(font_small.render(txt, True, (0, 0, 0)), (panel_x + 10, y))
+        y += 28
+
+    # Prikaz piva po timu ispod trafika
+    y += 10
+    for t in range(1, 5):
+        txt = f"TIM{t}: {team_beers[t]} piva"
+        screen.blit(font_small.render(txt, True, (0, 0, 120)), (panel_x + 10, y))
+        y += 24
+
 while True:
     screen.fill((200, 200, 200))
     screen.blit(background, (SIDE_PANEL_WIDTH, 0))
@@ -350,6 +391,7 @@ while True:
     draw_button()
     draw_button_result()
     draw_current_team_panel()
+    draw_trafike_and_beers()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -521,6 +563,18 @@ while True:
         turn_dice_rolled = False
         turn_character_played = False
         rolling_result = None  # resetuj prikaz kockice
+
+        # ISPLATA PIVA NA KRAJU KRUGA (kad je TIM4 završio)
+        if team_turn_index == 0:  # posle TIM4
+            for trafika in trafike:
+                chars_on_trafika = [c for c in characters if tuple(c.currentpos) == trafika["pos"]]
+                timovi_na_trafici = set(c.team for c in chars_on_trafika if c.team in team_beers)
+                if trafika["piva"] > 0 and timovi_na_trafici:
+                    for t in timovi_na_trafici:
+                        isplata = min(trafika["isplata"], trafika["piva"])
+                        team_beers[t] += isplata
+                        trafika["piva"] -= isplata
+                        break  # isplati samo jednom timu po trafici po krugu
 
     pygame.display.flip()
     clock.tick(60)
